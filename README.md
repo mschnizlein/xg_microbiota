@@ -1,7 +1,7 @@
 # xg_microbiota
 Code used for the analyses in our publication on the effects of xanthan gum on the murine microbiota.
 
-# Dietary xanthan gum alters antibiotic efficacy against the murine gut microbiota and attenuates Clostridioides difficile colonization
+## Dietary xanthan gum alters antibiotic efficacy against the murine gut microbiota and attenuates Clostridioides difficile colonization
 Matthew K. Schnizlein, Kimberly C. Vendrov, Summer J. Edwards, Eric C. Martens, Vincent B. Young 
 
 Introduction: Dietary fiber provides a variety of microbiota-mediated benefits ranging from anti-inflammatory metabolites to pathogen colonization resistance. A healthy gut microbiota protects the host from Clostridioides difficile, formerly Clostridium difficile. Manipulation of these microbes through diet may increase colonization resistance to improve clinical outcomes. The primary objective of this study was to identify how the dietary fiber xanthan gum affects the microbiota and C. difficile colonization.
