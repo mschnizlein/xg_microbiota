@@ -1,0 +1,75 @@
+## xg_bioreac: sequencing of xanthan gum experiments 4(chen model) and 5 (relapse), and also bioreactor experiment 1 (no cdiff, only mouse feces)
+# 9/12/18
+# Matt Schnizlein
+
+set.dir(input=/scratch/youngvi_fluxm/mschnizl/miseq_m02127_run-342_2018_young_MSP0002)
+output.dir(output=/scratch/youngvi_fluxm/mschnizl/xg4-5_bior1)
+set.dir(tempdefault=/scratch/youngvi_fluxm/mschnizl/xg4-5_bior1)
+
+# process seqs:
+make.contigs(file=xg_bioreac.files, processors=2)
+summary.seqs(fasta=xg_bioreac.trim.contigs.fasta, processors=2)
+screen.seqs(fasta=xg_bioreac.trim.contigs.fasta, group=xg_bioreac.contigs.groups, maxambig=0, maxlength=275, processors=2)
+unique.seqs(fasta=xg_bioreac.trim.contigs.good.fasta)
+count.seqs(name=xg_bioreac.trim.contigs.good.names, group=xg_bioreac.contigs.good.groups)
+summary.seqs(count=xg_bioreac.trim.contigs.good.count_table, processors=2)
+pcr.seqs(fasta=silva.seed_v128.align, start=11894, end=25319, keepdots=F, processors=2)
+summary.seqs(fasta=silva.seed_v128.align, processors=2)
+align.seqs(fasta=xg_bioreac.trim.contigs.good.unique.fasta, reference=silva.seed_v128.align, processors=2)
+summary.seqs(fasta=xg_bioreac.trim.contigs.good.unique.align, count=xg_bioreac.trim.contigs.good.count_table, processors=2)
+screen.seqs(fasta=xg_bioreac.trim.contigs.good.unique.align, count=xg_bioreac.trim.contigs.good.count_table, summary=xg_bioreac.trim.contigs.good.unique.summary, start=1968, end=11550, maxhomop=8, processors=2)
+summary.seqs(fasta=current, count=current, processors=2)
+filter.seqs(fasta=xg_bioreac.trim.contigs.good.unique.good.align, vertical=T, trump=., processors=2)
+unique.seqs(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.fasta, count=xg_bioreac.trim.contigs.good.good.count_table)
+pre.cluster(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.fasta, count=xg_bioreac.trim.contigs.good.unique.good.filter.count_table, diffs=2, processors=2)
+chimera.uchime(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.fasta, count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.count_table, dereplicate=t, processors=2)
+remove.seqs(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.fasta, accnos=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.accnos)
+summary.seqs(fasta=current, count=current, processors=2)
+classify.seqs(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, reference=silva.seed_v128.align, taxonomy=silva.seed_v128.tax, cutoff=80)
+remove.lineage(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, taxonomy=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.taxonomy, taxon=Chloroplast-Mitochondria-unknown-Archaea-Eukaryota)
+count.seqs(name=current, group=current)
+count.groups(count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table)
+
+# remove groups if you so choose (note: this will impact name chaneges down the line):
+# remove.groups(count=current, fasta=current, taxonomy=current, groups=17401p01Amis)
+
+# clustering:
+cluster.split(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table, taxonomy=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.pick.taxonomy, splitmethod=classify, taxlevel=4, cutoff=0.03, processors=1)
+	#if cluster.split not working, try dist.seqs/cluster:
+	#dist.seqs(fasta=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, cutoff=0.15)
+	#cluster(column=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.dist, count=xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table)
+
+# rename FINAL files for ease of naming
+system(mv xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.unique_list.list xg_bioreac.final.list)
+system(mv xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta xg_bioreac.final.fasta)
+system(mv xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.pick.seed_v128.wang.pick.taxonomy xg_bioreac.final.taxonomy)
+system(mv xg_bioreac.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table xg_bioreac.final.count_table)
+system(mkdir single_files)
+system(mv *.map single_files)
+
+# make OTU rel abundance file
+count.groups(count=xg_bioreac.final.count_table)
+make.shared(list=xg_bioreac.final.list, count=xg_bioreac.final.count_table, label=0.03)
+classify.otu(list=xg_bioreac.final.list, count=xg_bioreac.final.count_table, taxonomy=xg_bioreac.final.taxonomy, label=0.03)
+	#remove.groups(count=xg_bioreac.final.count_table, fasta=xg_bioreac.final.fasta, taxonomy=xg_bioreac.final.taxonomy, list=xg_bioreac.final.list, shared=xg_bioreac.final.shared, groups=)
+
+##no subsampling or filtering results (will include some controls):
+remove.groups(shared=xg_bioreac.final.shared, groups=Zymo-water)
+
+dist.shared(shared=xg_bioreac.final.0.03.pick.shared, calc=thetayc-jclass-jest, subsample=F, iters=1000)
+pcoa(phylip=xg_bioreac.final.0.03.pick.thetayc.0.03.lt.dist)
+nmds(phylip=xg_bioreac.final.0.03.pick.thetayc.0.03.lt.dist, mindim=3, maxdim=3)
+summary.shared(shared=xg_bioreac.final.0.03.pick.shared, calc=sharedsobs-braycurtis-spearman-thetayc-jsd-sharednseqs)
+summary.single(shared=xg_bioreac.final.0.03.pick.shared, calc=simpsoneven-simpson-invsimpson-shannon-npshannon-sobs-chao-nseqs)
+summary.single(shared=xg_bioreac.final.shared, calc=simpsoneven-simpson-invsimpson-shannon-npshannon-sobs-chao-nseqs)
+system(mv *.rabund single_files)
+
+##filtering (but no subsampling):
+filter.shared(shared=xg_bioreac.final.0.03.pick.shared, makerare=F, minpercent=0.0001)
+summary.shared(shared=xg_bioreac.final.0.03.pick.0.03.filter.shared, calc=sharedsobs-braycurtis-spearman-thetayc-jsd-sharednseqs)
+summary.single(shared=xg_bioreac.final.0.03.pick.0.03.filter.shared, calc=simpsoneven-simpson-invsimpson-shannon-npshannon-sobs-chao-nseqs)
+dist.shared(shared=xg_bioreac.final.0.03.pick.0.03.filter.shared, calc=thetayc-jclass-jest)
+pcoa(phylip=xg_bioreac.final.0.03.pick.0.03.filter.thetayc.0.03.lt.dist)
+nmds(phylip=xg_bioreac.final.0.03.pick.0.03.filter.thetayc.0.03.lt.dist, mindim=3, maxdim=3)
+
+
